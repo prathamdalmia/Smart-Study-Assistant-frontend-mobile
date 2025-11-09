@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/animated_card.dart';
@@ -163,6 +167,93 @@ class _NotesScreenState extends State<NotesScreen> {
     }
   }
 
+  Future<void> _viewFile(String filePath) async {
+    try {
+      // Show loading indicator
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      // Get file URL
+      final fileUrl = ApiService.getFileUrl(filePath);
+      
+      // Download file with authentication headers if needed
+      final headers = <String, String>{};
+      // Note: Files are served statically, but we can add auth headers if needed
+      // For now, files are publicly accessible
+      final response = await http.get(Uri.parse(fileUrl), headers: headers);
+      
+      if (response.statusCode == 200) {
+        // Get temporary directory
+        final tempDir = await getTemporaryDirectory();
+        final fileName = filePath.split('/').last;
+        final file = File('${tempDir.path}/$fileName');
+        
+        // Write file to temporary directory
+        await file.writeAsBytes(response.bodyBytes);
+        
+        // Close loading dialog
+        if (mounted) {
+          Navigator.pop(context);
+        }
+        
+        // Open file with system default app
+        final result = await OpenFilex.open(file.path);
+        
+        if (result.type != ResultType.done) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Could not open file: ${result.message}'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
+        }
+      } else {
+        // Close loading dialog
+        if (mounted) {
+          Navigator.pop(context);
+        }
+        
+        // Try opening URL directly as fallback
+        final uri = Uri.parse(fileUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to open file: ${response.statusCode}'),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error viewing file: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -239,6 +330,13 @@ class _NotesScreenState extends State<NotesScreen> {
                                 return AnimatedCard(
                                   delay: index * 50,
                                   onTap: () {
+                                    // If note only has a file (no content), open file directly
+                                    if (note['filePath'] != null && 
+                                        (note['content'] == null || note['content'].toString().trim().isEmpty)) {
+                                      _viewFile(note['filePath']);
+                                      return;
+                                    }
+                                    
                                     // Show note details
                                     showDialog(
                                       context: context,
@@ -265,7 +363,7 @@ class _NotesScreenState extends State<NotesScreen> {
                                                     const SizedBox(width: 8),
                                                     Expanded(
                                                       child: Text(
-                                                        'File: ${note['filePath']}',
+                                                        'File: ${note['filePath'].split('/').last}',
                                                         style: const TextStyle(
                                                           fontSize: 12,
                                                           color: AppTheme.textSecondary,
@@ -273,6 +371,19 @@ class _NotesScreenState extends State<NotesScreen> {
                                                       ),
                                                     ),
                                                   ],
+                                                ),
+                                                const SizedBox(height: 12),
+                                                ElevatedButton.icon(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    _viewFile(note['filePath']);
+                                                  },
+                                                  icon: const Icon(Icons.visibility),
+                                                  label: const Text('View File'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: AppTheme.primaryColor,
+                                                    foregroundColor: Colors.white,
+                                                  ),
                                                 ),
                                               ],
                                               const SizedBox(height: 16),
@@ -311,10 +422,13 @@ class _NotesScreenState extends State<NotesScreen> {
                                             ),
                                           ),
                                           if (note['filePath'] != null)
-                                            Icon(
-                                              Icons.attach_file,
-                                              size: 20,
-                                              color: Colors.grey.shade600,
+                                            GestureDetector(
+                                              onTap: () => _viewFile(note['filePath']),
+                                              child: Icon(
+                                                Icons.attach_file,
+                                                size: 20,
+                                                color: Colors.grey.shade600,
+                                              ),
                                             ),
                                         ],
                                       ),

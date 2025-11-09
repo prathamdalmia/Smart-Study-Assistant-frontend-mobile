@@ -97,6 +97,17 @@ class ApiService {
     throw Exception('Failed to upload note');
   }
 
+  // Get file URL from file path
+  static String getFileUrl(String filePath) {
+    // Extract base URL without /api
+    final baseUrlWithoutApi = _baseUrl.replaceAll('/api', '');
+    // Remove 'uploads/' prefix if present
+    final cleanPath = filePath.startsWith('uploads/') 
+        ? filePath 
+        : 'uploads/$filePath';
+    return '$baseUrlWithoutApi/$cleanPath';
+  }
+
   // Tasks
   static Future<List<dynamic>> getTasks() async {
     final res =
