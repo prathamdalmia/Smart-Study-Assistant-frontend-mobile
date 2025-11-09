@@ -10,6 +10,7 @@ import 'screens/notes_screen.dart';
 import 'screens/tasks_screen.dart';
 import 'screens/ai_screen.dart';
 import 'screens/analytics_screen.dart';
+import 'screens/admin_screen.dart';
 
 void main() {
   // Ensure the app targets the deployed backend by default
@@ -31,7 +32,9 @@ class MyApp extends StatelessWidget {
             title: 'Smart Study Assistant',
             theme: AppTheme.lightTheme,
             debugShowCheckedModeBanner: false,
-            initialRoute: auth.isAuthenticated ? '/dashboard' : '/login',
+            initialRoute: auth.isAuthenticated
+                ? (auth.isAdmin ? '/admin' : '/dashboard')
+                : '/login',
             routes: {
               '/login': (_) => const LoginScreen(),
               '/signup': (_) => const SignupScreen(),
@@ -40,6 +43,7 @@ class MyApp extends StatelessWidget {
               '/tasks': (_) => const TasksScreen(),
               '/ai': (_) => const AiScreen(),
               '/analytics': (_) => const AnalyticsScreen(),
+              '/admin': (_) => const AdminScreen(),
             },
           );
         },

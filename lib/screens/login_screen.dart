@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
   late AnimationController _animController;
   bool _obscurePassword = true;
+  bool _isAdmin = false;
 
   @override
   void initState() {
@@ -47,9 +48,14 @@ class _LoginScreenState extends State<LoginScreen>
       final ok = await auth.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
+        isAdminLogin: _isAdmin,
       );
       if (ok && mounted) {
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        if (_isAdmin && auth.isAdmin) {
+          Navigator.of(context).pushReplacementNamed('/admin');
+        } else {
+          Navigator.of(context).pushReplacementNamed('/dashboard');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -214,6 +220,31 @@ class _LoginScreenState extends State<LoginScreen>
                           .animate()
                           .fadeIn(delay: 700.ms)
                           .slideX(begin: -0.2, end: 0, delay: 700.ms),
+                      const SizedBox(height: 20),
+                      // Admin Checkbox
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: _isAdmin,
+                            onChanged: (value) {
+                              setState(() {
+                                _isAdmin = value ?? false;
+                              });
+                            },
+                            activeColor: AppTheme.primaryColor,
+                          ),
+                          Text(
+                            'Login as Admin',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade700,
+                            ),
+                          ),
+                        ],
+                      )
+                          .animate()
+                          .fadeIn(delay: 750.ms)
+                          .slideX(begin: -0.2, end: 0, delay: 750.ms),
                       const SizedBox(height: 32),
                       // Login Button
                       GradientButton(

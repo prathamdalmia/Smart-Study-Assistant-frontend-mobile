@@ -28,11 +28,14 @@ Map<String, String> _headers([Map<String, String>? extra]) {
 class ApiService {
   // Auth
   static Future<Map<String, dynamic>> login(
-      String emailOrUsername, String password) async {
+      String emailOrUsername, String password, {bool isAdmin = false}) async {
     final res = await http.post(Uri.parse('$_baseUrl/auth/login'),
         headers: _headers(),
-        body: jsonEncode(
-            {'emailOrUsername': emailOrUsername, 'password': password}));
+        body: jsonEncode({
+          'emailOrUsername': emailOrUsername,
+          'password': password,
+          'isAdmin': isAdmin,
+        }));
     if (res.statusCode == 200) {
       return jsonDecode(res.body) as Map<String, dynamic>;
     }
@@ -181,5 +184,27 @@ class ApiService {
       return jsonDecode(res.body) as Map<String, dynamic>;
     }
     throw Exception('Failed to update study time');
+  }
+
+  // Admin
+  static Future<List<dynamic>> getAllStudents() async {
+    final res = await http.get(
+      Uri.parse('$_baseUrl/admin/students'),
+      headers: _headers(),
+    );
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body) as List<dynamic>;
+    }
+    throw Exception('Failed to fetch students');
+  }
+
+  static Future<void> deleteStudent(String studentId) async {
+    final res = await http.delete(
+      Uri.parse('$_baseUrl/admin/students/$studentId'),
+      headers: _headers(),
+    );
+    if (res.statusCode != 200 && res.statusCode != 204) {
+      throw Exception('Failed to delete student');
+    }
   }
 }

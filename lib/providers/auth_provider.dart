@@ -6,12 +6,14 @@ class AuthProvider extends ChangeNotifier {
   String? token;
   Map<String, dynamic>? user;
   bool loading = false;
+  bool isAdmin = false;
 
   bool get isAuthenticated => token != null;
 
   Future<void> loadFromStorage() async {
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString('token');
+    isAdmin = prefs.getBool('isAdmin') ?? false;
     final userJson = prefs.getString('user');
     if (userJson != null) {
       user = {'name': userJson};
@@ -23,16 +25,23 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> login(String emailOrUsername, String password) async {
+  Future<bool> login(String emailOrUsername, String password, {bool isAdminLogin = false}) async {
     loading = true;
     notifyListeners();
     try {
-      final resp = await ApiService.login(emailOrUsername, password);
+      final resp = await ApiService.login(emailOrUsername, password, isAdmin: isAdminLogin);
       token = resp['token'];
-      // backend returns 'student'
-      user = resp['student'];
+      isAdmin = resp['isAdmin'] ?? false;
+      
+      if (isAdmin) {
+        user = resp['admin'];
+      } else {
+        user = resp['student'];
+      }
+      
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token!);
+      await prefs.setBool('isAdmin', isAdmin);
       await prefs.setString('user', user?['name'] ?? '');
       setToken(token!);
       loading = false;
@@ -70,9 +79,11 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     token = null;
     user = null;
+    isAdmin = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     await prefs.remove('user');
+    await prefs.remove('isAdmin');
     clearToken();
     notifyListeners();
   }
