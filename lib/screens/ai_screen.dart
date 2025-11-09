@@ -620,83 +620,87 @@ class _AiScreenState extends State<AiScreen>
             final correctAnswer = question['answer'] ?? '';
             final selectedAnswer = _selectedAnswers[index];
 
-            return AnimatedCard(
-              delay: index * 100,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${index + 1}. $questionText',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+            return Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: AnimatedCard(
+                delay: index * 100,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${index + 1}. $questionText',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...options.map((option) {
-                    final isSelected = selectedAnswer == option;
-                    final showAnswer = _showResults && option == correctAnswer;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: InkWell(
-                        onTap: _showResults
-                            ? null
-                            : () => _selectAnswer(index, option),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: showAnswer
-                                ? AppTheme.successColor.withOpacity(0.1)
-                                : isSelected
-                                    ? AppTheme.primaryColor.withOpacity(0.1)
-                                    : Colors.grey.shade100,
-                            border: Border.all(
+                    const SizedBox(height: 12),
+                    ...options.map((option) {
+                      final isSelected = selectedAnswer == option;
+                      final showAnswer =
+                          _showResults && option == correctAnswer;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: InkWell(
+                          onTap: _showResults
+                              ? null
+                              : () => _selectAnswer(index, option),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
                               color: showAnswer
-                                  ? AppTheme.successColor
+                                  ? AppTheme.successColor.withOpacity(0.1)
                                   : isSelected
-                                      ? AppTheme.primaryColor
-                                      : Colors.grey.shade300,
-                              width: showAnswer || isSelected ? 2 : 1,
+                                      ? AppTheme.primaryColor.withOpacity(0.1)
+                                      : Colors.grey.shade100,
+                              border: Border.all(
+                                color: showAnswer
+                                    ? AppTheme.successColor
+                                    : isSelected
+                                        ? AppTheme.primaryColor
+                                        : Colors.grey.shade300,
+                                width: showAnswer || isSelected ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(child: Text(option)),
-                              if (_showResults && option == correctAnswer)
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: AppTheme.successColor,
-                                ),
-                              if (_showResults &&
-                                  isSelected &&
-                                  option != correctAnswer)
-                                const Icon(
-                                  Icons.cancel,
-                                  color: AppTheme.errorColor,
-                                ),
-                            ],
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(option)),
+                                if (_showResults && option == correctAnswer)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: AppTheme.successColor,
+                                  ),
+                                if (_showResults &&
+                                    isSelected &&
+                                    option != correctAnswer)
+                                  const Icon(
+                                    Icons.cancel,
+                                    color: AppTheme.errorColor,
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
+                      );
+                    }),
+                    if (_showResults && question['explanation'] != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Explanation: ${question['explanation']}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
                       ),
-                    );
-                  }),
-                  if (_showResults && question['explanation'] != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Explanation: ${question['explanation']}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             );
           }),
