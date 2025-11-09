@@ -182,30 +182,30 @@ class _NotesScreenState extends State<NotesScreen> {
 
       // Get file URL
       final fileUrl = ApiService.getFileUrl(filePath);
-      
+
       // Download file with authentication headers if needed
       final headers = <String, String>{};
       // Note: Files are served statically, but we can add auth headers if needed
       // For now, files are publicly accessible
       final response = await http.get(Uri.parse(fileUrl), headers: headers);
-      
+
       if (response.statusCode == 200) {
         // Get temporary directory
         final tempDir = await getTemporaryDirectory();
         final fileName = filePath.split('/').last;
         final file = File('${tempDir.path}/$fileName');
-        
+
         // Write file to temporary directory
         await file.writeAsBytes(response.bodyBytes);
-        
+
         // Close loading dialog
         if (mounted) {
           Navigator.pop(context);
         }
-        
+
         // Open file with system default app
         final result = await OpenFilex.open(file.path);
-        
+
         if (result.type != ResultType.done) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +221,7 @@ class _NotesScreenState extends State<NotesScreen> {
         if (mounted) {
           Navigator.pop(context);
         }
-        
+
         // Try opening URL directly as fallback
         final uri = Uri.parse(fileUrl);
         if (await canLaunchUrl(uri)) {
@@ -242,7 +242,7 @@ class _NotesScreenState extends State<NotesScreen> {
       if (mounted) {
         Navigator.pop(context);
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -264,206 +264,235 @@ class _NotesScreenState extends State<NotesScreen> {
           ),
           child: SafeArea(
             child: Column(
-            children: [
-              // App Bar
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'My Notes',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+              children: [
+                // App Bar
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Expanded(
+                        child: Text(
+                          'My Notes',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              // Content
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _notes.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.note_outlined,
-                                  size: 80,
-                                  color: Colors.grey.shade400,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No notes yet',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey.shade600,
+                // Content
+                Expanded(
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _notes.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.note_outlined,
+                                    size: 80,
+                                    color: Colors.grey.shade400,
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Create your first note!',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade500,
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No notes yet',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey.shade600,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _loadNotes,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              itemCount: _notes.length,
-                              itemBuilder: (context, index) {
-                                final note = _notes[index];
-                                return AnimatedCard(
-                                  delay: index * 50,
-                                  onTap: () {
-                                    // If note only has a file (no content), open file directly
-                                    if (note['filePath'] != null && 
-                                        (note['content'] == null || note['content'].toString().trim().isEmpty)) {
-                                      _viewFile(note['filePath']);
-                                      return;
-                                    }
-                                    
-                                    // Show note details
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        title: Text(note['title'] ?? 'Untitled'),
-                                        content: SingleChildScrollView(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              if (note['content'] != null)
-                                                Text(note['content']),
-                                              if (note['filePath'] != null) ...[
-                                                const SizedBox(height: 16),
-                                                const Divider(),
-                                                const SizedBox(height: 8),
-                                                Row(
-                                                  children: [
-                                                    const Icon(Icons.attach_file),
-                                                    const SizedBox(width: 8),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'File: ${note['filePath'].split('/').last}',
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: AppTheme.textSecondary,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Create your first note!',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _loadNotes,
+                              child: ListView.builder(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                itemCount: _notes.length,
+                                itemBuilder: (context, index) {
+                                  final note = _notes[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: AnimatedCard(
+                                      delay: index * 50,
+                                      onTap: () {
+                                        // If note only has a file (no content), open file directly
+                                        if (note['filePath'] != null &&
+                                            (note['content'] == null ||
+                                                note['content']
+                                                    .toString()
+                                                    .trim()
+                                                    .isEmpty)) {
+                                          _viewFile(note['filePath']);
+                                          return;
+                                        }
+
+                                        // Show note details
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            title: Text(
+                                                note['title'] ?? 'Untitled'),
+                                            content: SingleChildScrollView(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (note['content'] != null)
+                                                    Text(note['content']),
+                                                  if (note['filePath'] !=
+                                                      null) ...[
+                                                    const SizedBox(height: 16),
+                                                    const Divider(),
+                                                    const SizedBox(height: 8),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                            Icons.attach_file),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'File: ${note['filePath'].split('/').last}',
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 12,
+                                                              color: AppTheme
+                                                                  .textSecondary,
+                                                            ),
+                                                          ),
                                                         ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    ElevatedButton.icon(
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                        _viewFile(
+                                                            note['filePath']);
+                                                      },
+                                                      icon: const Icon(
+                                                          Icons.visibility),
+                                                      label: const Text(
+                                                          'View File'),
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        backgroundColor:
+                                                            AppTheme
+                                                                .primaryColor,
+                                                        foregroundColor:
+                                                            Colors.white,
                                                       ),
                                                     ),
                                                   ],
-                                                ),
-                                                const SizedBox(height: 12),
-                                                ElevatedButton.icon(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    _viewFile(note['filePath']);
-                                                  },
-                                                  icon: const Icon(Icons.visibility),
-                                                  label: const Text('View File'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: AppTheme.primaryColor,
-                                                    foregroundColor: Colors.white,
+                                                  const SizedBox(height: 16),
+                                                  Text(
+                                                    _formatDate(
+                                                        note['createdAt'] ??
+                                                            note['created_at']),
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                _formatDate(note['createdAt'] ?? note['created_at']),
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey.shade600,
-                                                ),
+                                                ],
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: const Text('Close'),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context),
-                                            child: const Text('Close'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                        );
+                                      },
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Expanded(
-                                            child: Text(
-                                              note['title'] ?? 'Untitled',
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.textPrimary,
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  note['title'] ?? 'Untitled',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppTheme.textPrimary,
+                                                  ),
+                                                ),
                                               ),
+                                              if (note['filePath'] != null)
+                                                GestureDetector(
+                                                  onTap: () => _viewFile(
+                                                      note['filePath']),
+                                                  child: Icon(
+                                                    Icons.attach_file,
+                                                    size: 20,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          if (note['content'] != null) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              note['content'],
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade700,
+                                              ),
+                                            ),
+                                          ],
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            _formatDate(note['createdAt'] ??
+                                                note['created_at']),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade500,
                                             ),
                                           ),
-                                          if (note['filePath'] != null)
-                                            GestureDetector(
-                                              onTap: () => _viewFile(note['filePath']),
-                                              child: Icon(
-                                                Icons.attach_file,
-                                                size: 20,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                            ),
                                         ],
                                       ),
-                                      if (note['content'] != null) ...[
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          note['content'],
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        _formatDate(note['createdAt'] ?? note['created_at']),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      ),  // Close BackgroundDesign
+      ), // Close BackgroundDesign
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

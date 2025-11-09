@@ -14,8 +14,10 @@ class StatsCard extends StatelessWidget {
       return 32;
     } else if (value.length < 3) {
       return 23;
-    } else {
+    } else if (value.length < 4) {
       return 22;
+    } else {
+      return 19.5;
     }
   }
 

@@ -53,7 +53,8 @@ class _TasksScreenState extends State<TasksScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text('Add New Task'),
           content: SingleChildScrollView(
             child: Column(
@@ -222,8 +223,10 @@ class _TasksScreenState extends State<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final pendingTasks = _tasks.where((t) => t['status'] == 'Pending').toList();
-    final inProgressTasks = _tasks.where((t) => t['status'] == 'In Progress').toList();
-    final completedTasks = _tasks.where((t) => t['status'] == 'Completed').toList();
+    final inProgressTasks =
+        _tasks.where((t) => t['status'] == 'In Progress').toList();
+    final completedTasks =
+        _tasks.where((t) => t['status'] == 'Completed').toList();
 
     return Scaffold(
       body: BackgroundDesign(
@@ -233,229 +236,255 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
           child: SafeArea(
             child: Column(
-            children: [
-              // App Bar
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'My Tasks',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Stats
-              if (!_loading && _tasks.isNotEmpty)
+              children: [
+                // App Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: _StatCard(
-                          title: 'Pending',
-                          count: pendingTasks.length,
-                          color: Colors.grey,
-                        ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          title: 'In Progress',
-                          count: inProgressTasks.length,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          title: 'Completed',
-                          count: completedTasks.length,
-                          color: AppTheme.successColor,
+                      const Expanded(
+                        child: Text(
+                          'My Tasks',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              if (!_loading && _tasks.isNotEmpty) const SizedBox(height: 20),
-              // Content
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _tasks.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.task_outlined,
-                                  size: 80,
-                                  color: Colors.grey.shade400,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No tasks yet',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey.shade600,
+                // Stats
+                if (!_loading && _tasks.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            title: 'Pending',
+                            count: pendingTasks.length,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            title: 'In Progress',
+                            count: inProgressTasks.length,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _StatCard(
+                            title: 'Completed',
+                            count: completedTasks.length,
+                            color: AppTheme.successColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (!_loading && _tasks.isNotEmpty) const SizedBox(height: 20),
+                // Content
+                Expanded(
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _tasks.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.task_outlined,
+                                    size: 80,
+                                    color: Colors.grey.shade400,
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Create your first task!',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade500,
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No tasks yet',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey.shade600,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _loadTasks,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              itemCount: _tasks.length,
-                              itemBuilder: (context, index) {
-                                final task = _tasks[index];
-                                final isOverdue = _isOverdue(
-                                  task['dueDate'],
-                                  task['status'],
-                                );
-                                return AnimatedCard(
-                                  delay: index * 50,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Create your first task!',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _loadTasks,
+                              child: ListView.builder(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                itemCount: _tasks.length,
+                                itemBuilder: (context, index) {
+                                  final task = _tasks[index];
+                                  final isOverdue = _isOverdue(
+                                    task['dueDate'],
+                                    task['status'],
+                                  );
+                                  return Padding(
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: AnimatedCard(
+                                      delay: index * 50,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Expanded(
-                                            child: Text(
-                                              task['taskName'] ?? 'Untitled',
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.textPrimary,
-                                              ),
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: _getStatusColor(task['status'])
-                                                  .withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: DropdownButton<String>(
-                                              value: task['status'],
-                                              underline: const SizedBox(),
-                                              isDense: true,
-                                              items: ['Pending', 'In Progress', 'Completed']
-                                                  .map((status) => DropdownMenuItem(
-                                                        value: status,
-                                                        child: Text(
-                                                          status,
-                                                          style: TextStyle(
-                                                            fontSize: 12,
-                                                            color: _getStatusColor(status),
-                                                            fontWeight: FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                      ))
-                                                  .toList(),
-                                              onChanged: (value) {
-                                                if (value != null) {
-                                                  _updateTaskStatus(
-                                                    task['_id'] ?? task['id'],
-                                                    value,
-                                                  );
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (task['description'] != null) ...[
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          task['description'],
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.calendar_today,
-                                            size: 16,
-                                            color: isOverdue
-                                                ? AppTheme.errorColor
-                                                : Colors.grey.shade600,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            _formatDate(task['dueDate']),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: isOverdue
-                                                  ? AppTheme.errorColor
-                                                  : Colors.grey.shade600,
-                                              fontWeight:
-                                                  isOverdue ? FontWeight.bold : FontWeight.normal,
-                                            ),
-                                          ),
-                                          if (isOverdue) ...[
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 4,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: AppTheme.errorColor.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: const Text(
-                                                'Overdue',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: AppTheme.errorColor,
-                                                  fontWeight: FontWeight.bold,
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  task['taskName'] ??
+                                                      'Untitled',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppTheme.textPrimary,
+                                                  ),
                                                 ),
+                                              ),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: _getStatusColor(
+                                                          task['status'])
+                                                      .withOpacity(0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: DropdownButton<String>(
+                                                  value: task['status'],
+                                                  underline: const SizedBox(),
+                                                  isDense: true,
+                                                  items: [
+                                                    'Pending',
+                                                    'In Progress',
+                                                    'Completed'
+                                                  ]
+                                                      .map((status) =>
+                                                          DropdownMenuItem(
+                                                            value: status,
+                                                            child: Text(
+                                                              status,
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    _getStatusColor(
+                                                                        status),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ))
+                                                      .toList(),
+                                                  onChanged: (value) {
+                                                    if (value != null) {
+                                                      _updateTaskStatus(
+                                                        task['_id'] ??
+                                                            task['id'],
+                                                        value,
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (task['description'] != null) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              task['description'],
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade700,
                                               ),
                                             ),
                                           ],
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_today,
+                                                size: 16,
+                                                color: isOverdue
+                                                    ? AppTheme.errorColor
+                                                    : Colors.grey.shade600,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                _formatDate(task['dueDate']),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: isOverdue
+                                                      ? AppTheme.errorColor
+                                                      : Colors.grey.shade600,
+                                                  fontWeight: isOverdue
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                ),
+                                              ),
+                                              if (isOverdue) ...[
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: AppTheme.errorColor
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                  child: const Text(
+                                                    'Overdue',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color:
+                                                          AppTheme.errorColor,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                );
-                              },
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      ),  // Close BackgroundDesign
+      ), // Close BackgroundDesign
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateTaskDialog,
         child: const Icon(Icons.add),
