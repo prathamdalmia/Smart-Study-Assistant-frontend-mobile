@@ -17,6 +17,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   List<dynamic> _tasks = [];
   List<dynamic> _notes = [];
   bool _loading = true;
+  
+  // Study timer state
+  bool _isTimerRunning = false;
+  int _elapsedSeconds = 0;
+  int _manualMinutes = 0;
 
   @override
   void initState() {
@@ -42,6 +47,121 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     } catch (e) {
       setState(() => _loading = false);
     }
+  }
+
+  void _startTimer() {
+    setState(() {
+      _isTimerRunning = true;
+      _elapsedSeconds = 0;
+    });
+    
+    // Update timer every second
+    Future.delayed(const Duration(seconds: 1), () {
+      if (_isTimerRunning && mounted) {
+        setState(() {
+          _elapsedSeconds++;
+        });
+        _updateTimer();
+      }
+    });
+  }
+
+  void _updateTimer() {
+    if (_isTimerRunning && mounted) {
+      Future.delayed(const Duration(seconds: 1), () {
+        if (_isTimerRunning && mounted) {
+          setState(() {
+            _elapsedSeconds++;
+          });
+          _updateTimer();
+        }
+      });
+    }
+  }
+
+  void _stopTimer() {
+    setState(() {
+      _isTimerRunning = false;
+    });
+  }
+
+  Future<void> _saveTimerStudyTime() async {
+    if (_elapsedSeconds < 60) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please study for at least 1 minute'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+      return;
+    }
+
+    final minutes = _elapsedSeconds ~/ 60;
+    await _logStudyTime(minutes);
+    
+    setState(() {
+      _elapsedSeconds = 0;
+    });
+  }
+
+  Future<void> _logManualStudyTime() async {
+    if (_manualMinutes <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid study time'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+      return;
+    }
+
+    await _logStudyTime(_manualMinutes);
+    
+    setState(() {
+      _manualMinutes = 0;
+    });
+  }
+
+  Future<void> _logStudyTime(int minutes) async {
+    try {
+      final updatedAnalytics = await ApiService.updateStudyTime(minutes);
+      setState(() {
+        _analytics = updatedAnalytics;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logged $minutes minutes of study time!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error logging study time: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  String _formatTimer(int seconds) {
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final secs = seconds % 60;
+    
+    if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+    }
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -146,9 +266,186 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             ],
                           ),
                           const SizedBox(height: 24),
-                          // Productivity Score Progress
+                          // Study Time Tracker
                           AnimatedCard(
                             delay: 400,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Track Study Time',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                // Timer Section
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // Timer Display
+                                      Text(
+                                        _formatTimer(_elapsedSeconds),
+                                        style: const TextStyle(
+                                          fontSize: 48,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                          fontFeatures: [
+                                            FontFeature.tabularFigures(),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      // Timer Controls
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          if (!_isTimerRunning)
+                                            ElevatedButton.icon(
+                                              onPressed: _startTimer,
+                                              icon: const Icon(Icons.play_arrow),
+                                              label: const Text('Start'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppTheme.successColor,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 24,
+                                                  vertical: 12,
+                                                ),
+                                              ),
+                                            )
+                                          else ...[
+                                            ElevatedButton.icon(
+                                              onPressed: _stopTimer,
+                                              icon: const Icon(Icons.pause),
+                                              label: const Text('Pause'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.orange,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 24,
+                                                  vertical: 12,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            ElevatedButton.icon(
+                                              onPressed: _elapsedSeconds >= 60
+                                                  ? _saveTimerStudyTime
+                                                  : null,
+                                              icon: const Icon(Icons.save),
+                                              label: const Text('Save'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: AppTheme.primaryColor,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 24,
+                                                  vertical: 12,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      if (_isTimerRunning) ...[
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Timer is running...',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Divider(),
+                                const SizedBox(height: 20),
+                                // Manual Entry Section
+                                const Text(
+                                  'Or Log Manually',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Minutes',
+                                          border: OutlineInputBorder(),
+                                          hintText: 'Enter minutes',
+                                        ),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _manualMinutes = int.tryParse(value) ?? 0;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    ElevatedButton.icon(
+                                      onPressed: _manualMinutes > 0
+                                          ? _logManualStudyTime
+                                          : null,
+                                      icon: const Icon(Icons.add),
+                                      label: const Text('Log'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primaryColor,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                          vertical: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                // Quick buttons
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _QuickTimeButton(
+                                      minutes: 15,
+                                      onTap: () => _logStudyTime(15),
+                                    ),
+                                    _QuickTimeButton(
+                                      minutes: 30,
+                                      onTap: () => _logStudyTime(30),
+                                    ),
+                                    _QuickTimeButton(
+                                      minutes: 60,
+                                      onTap: () => _logStudyTime(60),
+                                    ),
+                                    _QuickTimeButton(
+                                      minutes: 120,
+                                      onTap: () => _logStudyTime(120),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          // Productivity Score Progress
+                          AnimatedCard(
+                            delay: 500,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -197,7 +494,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           const SizedBox(height: 24),
                           // Task Overview
                           AnimatedCard(
-                            delay: 500,
+                            delay: 600,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -284,7 +581,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           const SizedBox(height: 24),
                           // Study Statistics
                           AnimatedCard(
-                            delay: 600,
+                            delay: 700,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -326,7 +623,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           const SizedBox(height: 24),
                           // Productivity Insights
                           AnimatedCard(
-                            delay: 700,
+                            delay: 800,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -513,6 +810,30 @@ class _InsightCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _QuickTimeButton extends StatelessWidget {
+  final int minutes;
+  final VoidCallback onTap;
+
+  const _QuickTimeButton({
+    required this.minutes,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: Text('${minutes}m'),
     );
   }
 }

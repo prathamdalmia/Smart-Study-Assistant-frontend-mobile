@@ -170,4 +170,16 @@ class ApiService {
       return jsonDecode(res.body) as Map<String, dynamic>;
     throw Exception('Failed to fetch analytics');
   }
+
+  static Future<Map<String, dynamic>> updateStudyTime(int studyTimeMinutes) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/analytics/study-time'),
+      headers: _headers(),
+      body: jsonEncode({'studyTimeMinutes': studyTimeMinutes}),
+    );
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      return jsonDecode(res.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to update study time');
+  }
 }
